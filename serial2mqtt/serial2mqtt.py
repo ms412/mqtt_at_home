@@ -73,8 +73,9 @@ class manager(object):
                 if isinstance(v2,dict):
 
                     print('V2',k2,v2)
-                    _preset = float(v2.get('PRESET'))
-                    _item = int(v2.get('ITEM'))
+                    _offset = float(v2.get('OFFSET'))
+                    _item = int(v2.get('BYTE'))
+                    _factor = int(v2.get('FACTOR'))
 
                     number = port.write(b'$?\n')
                     time.sleep(1)
@@ -87,9 +88,10 @@ class manager(object):
                     self._log.debug('Received data %s'%(_str))
                     _topic = k1 + '/' + k2
                     print('_topic',_topic,_list)
-                    _value = float(_list[_item])
+                    _value = float(_list[_item])/_factor
 
-                    self._msg[_topic]= _value + _preset
+                    self._msg[_topic]= _value + _offset
+                    self._msg[(_topic+'_raw')] = _list[_item]
 
 
 
@@ -112,22 +114,7 @@ class manager(object):
             print('cc',_topic, measurement)
             self._mqttc.loop(2)
 
-
         self._mqttc.disconnect()
-
-
-
-        return True
-
-    def publishData(self,data):
-        mqttc = mqttpush(self._mqttbroker)
-        main_channel = self._mqttbroker.get('PUBLISH','/OPENHAB')
-
-        for deviceId, measurement in data.items():
-            channel = main_channel + '/' + deviceId
-          #  print('channel',channel,deviceId)
-            mqttc.publish(channel,measurement)
-
         return True
 
     def run(self):
